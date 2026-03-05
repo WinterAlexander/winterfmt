@@ -1,6 +1,6 @@
 # winterfmt
 
-Some Java code formatter for someone with very specific preferences. Some say it's best to stick to a popular standard, but I just didn't like the options there is for Java.
+Some Java code formatter for someone with very specific preferences. Some say it's best to stick to a popular standard, but I just didn't like the options available for Java.
 
 This formatter works by wrapping clang-format but avoids limitations of clang-format.
 
