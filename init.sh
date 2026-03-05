@@ -15,6 +15,26 @@ function winterfmt() {(
 	fi
 
 	set -e
+	clang-format --style=file:$WINTERFMT_FILE $cmdopts "$@"
+	if [[ $cmdopts =~ "-i" ]]; then
+		perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs' "$@"
+	elif [[ $cmdopts =~ "-n" ]] || [[ $cmdopts =~ "--dry-run" ]]; then
+
+	fi
+)}
+
+function __broken_winterfmt() {(
+	if [ "$#" -eq 0 ]; then
+		__broken_winterfmt -i $(ls **/*.java)
+		return
+	fi
+
+	cmdopts="$(echo "$@" | grep -oE "\-([A-Za-z0-9]|-|=)+")"
+	if [ -n "$cmdopts" ]; then
+		cmdopts="$cmdopts"
+	fi
+
+	set -e
 	for file in "$@"; do
 		if [[ "$file" =~ ^"-" ]]; then
 			continue
@@ -52,6 +72,7 @@ function winterfmt() {(
 				printf "--lines=%d:%d", start, max
 		}')
 		cmd="clang-format --style=file:$WINTERFMT_FILE $cmdopts $ranges $file"
+		echo $cmd
 		eval $cmd
 	done
 )}
