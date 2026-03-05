@@ -1,0 +1,50 @@
+#!/bin/bash
+
+WINTERFMT_FILE="$(dirname -- $(realpath "$_"))/.clang-format"
+export WINTERFMT_FILE="$WINTERFMT_FILE"
+
+function winterfmt() {(
+	cmdopts="$(echo "$@" | grep -oE "\-([A-Za-z0-9\-\=])+")"
+	if [ -n "$cmdopts" ]; then
+		cmdopts=" $cmdopts"
+	fi
+
+	set -e
+	for file in "$@"; do
+		if [[ "$file" =~ ^"-" ]]; then
+			continue
+		fi
+
+		if [ ! -f "$file" ]; then
+			continue
+		fi
+
+		lines=$(sed -nr '/catch\(([A-Za-z0-9]|\s|\.|\|)* ignored\)\s*\{\s*\}/=' $file)
+		if ! [[ -n $lines ]]; then
+			clang-format --style="file:$WINTERFMT_FILE"$cmdopts $file
+			continue
+		fi
+
+		lines=$(echo "$lines" | tr '\n' ' ')
+		ranges=$(awk -v max=$(wc -l < "$file") '
+		BEGIN {
+			split("'"$lines"'", lines)
+
+			for(i in lines)
+				skip[lines[i]] = 1
+
+			start = 1
+			for(i = 1; i <= max; i++) {
+				if(skip[i]) {
+					if(start < i)
+						printf "--lines=%d:%d ", start, i - 1
+					start = i + 1
+				}
+			}
+
+			if(start <= max)
+				printf "--lines=%d:%d", start, max
+		}')
+		clang-format --style="file:$WINTERFMT_FILE"$cmdopts $ranges $file
+	done
+)}
