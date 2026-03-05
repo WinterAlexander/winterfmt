@@ -4,9 +4,14 @@ WINTERFMT_FILE="$(dirname -- $(realpath "$_"))/.clang-format"
 export WINTERFMT_FILE="$WINTERFMT_FILE"
 
 function winterfmt() {(
-	cmdopts="$(echo "$@" | grep -oE "\-([A-Za-z0-9\-\=])+")"
+	if [ "$#" -eq 0 ]; then
+		winterfmt -i $(ls **/*.java)
+		return
+	fi
+
+	cmdopts="$(echo "$@" | grep -oE "\-([A-Za-z0-9]|-|=)+")"
 	if [ -n "$cmdopts" ]; then
-		cmdopts=" $cmdopts"
+		cmdopts="$cmdopts"
 	fi
 
 	set -e
@@ -21,7 +26,8 @@ function winterfmt() {(
 
 		lines=$(sed -nr '/catch\(([A-Za-z0-9]|\s|\.|\|)* ignored\)\s*\{\s*\}/=' $file)
 		if ! [[ -n $lines ]]; then
-			clang-format --style="file:$WINTERFMT_FILE"$cmdopts $file
+			cmd="clang-format --style=file:$WINTERFMT_FILE $cmdopts $file"
+			eval $cmd
 			continue
 		fi
 
@@ -45,6 +51,7 @@ function winterfmt() {(
 			if(start <= max)
 				printf "--lines=%d:%d", start, max
 		}')
-		clang-format --style="file:$WINTERFMT_FILE"$cmdopts $ranges $file
+		cmd="clang-format --style=file:$WINTERFMT_FILE $cmdopts $ranges $file"
+		eval $cmd
 	done
 )}
