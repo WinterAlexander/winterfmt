@@ -9,12 +9,22 @@ function winterfmt() {(
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
 		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		if ! [[ $files =~ [^[:space:]] ]]; then
+			echo "No .java file found in subdirectories"
+			return 2
+		fi
+
 		winterfmt -i "$files"
 		return $?
 	fi
 
 	if [[ "$@" == "check" ]]; then
 		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		if ! [[ $files =~ [^[:space:]] ]]; then
+			echo "No .java file found in subdirectories"
+			return 2
+		fi
+
 		winterfmt -n "$files"
 		return $?
 	fi
