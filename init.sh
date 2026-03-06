@@ -1,6 +1,7 @@
 #!/bin/bash
 
-WINTERFMT_FILE="$(dirname -- $(realpath "$_"))/.clang-format"
+
+WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/.clang-format"
 export WINTERFMT_FILE="$WINTERFMT_FILE"
 
 function winterfmt() {(
@@ -13,17 +14,17 @@ function winterfmt() {(
 
 	set -e
 	cmd="clang-format --style=file:$WINTERFMT_FILE $@ 2>&1"
-	output=$(script -q -c $cmd /dev/null)
+	output=$(script -q -c "$cmd" /dev/null)
 	if [[ $cmdopts =~ "-i" ]]; then
 		perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs' "$@"
 	elif [[ $cmdopts =~ "-n" ]] || [[ $cmdopts =~ "--dry-run" ]]; then
-		unwanted=$(grep catch -C 1 <<< $output)
-		output=$(grep -vF $unwanted <<< $output)
+		unwanted=$(grep catch -C 1 <<< "$output")
+		output=$(grep -vF "$unwanted" <<< "$output")
 	fi
-	output=$(sed 's/^\s*\|\s*$//g' <<< $output)
-	colorless=$(sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' <<< $output)
+	output=$(sed 's/^\s*\|\s*$//g' <<< "$output")
+	colorless=$(sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' <<< "$output")
 	if [[ $colorless =~ [^[:space:]] ]]; then
-		echo $output
+		echo "$output"
 		return 1
 	fi
 )}
