@@ -8,8 +8,15 @@ export WINTERFMT_FILE="$WINTERFMT_FILE"
 function winterfmt() {(
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
-		winterfmt -i $(ls **/*.java)
-		return
+		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		winterfmt -i "$files"
+		return $?
+	fi
+
+	if [[ "$@" == "check" ]]; then
+		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		winterfmt -n "$files"
+		return $?
 	fi
 
 	# extract options (words starting with -)
