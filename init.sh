@@ -34,8 +34,9 @@ function winterfmt() {(
 
 	# call clang-format with the same arguments but pass .clang-format file. Redirect stderr to
 	# stdout in order to manipulate it later
-	cmd="clang-format --style=file:$WINTERFMT_FILE $@ 2>&1"
+	cmd="${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1"
 
+	set +e
 	# call script in order to capture the output while preserving colors. -e to get the output code
 	output=$(script -q -e -c "$cmd" /dev/null)
 	code=$?
