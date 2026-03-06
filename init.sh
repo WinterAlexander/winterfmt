@@ -45,6 +45,7 @@ function winterfmt() {(
 
 
 	echo "#8"
+	set +e
 	# call script in order to capture the output while preserving colors. -e to get the output code
 	output=$(clang-format --style="file:$WINTERFMT_FILE" "$@" 2>&1)
 	#output=$(script -q -e -c "$cmd" /dev/null)
