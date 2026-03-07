@@ -2,13 +2,13 @@
 
 
 # locale .clang-format (same directory as this script)
-WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/.clang-format"
+WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")" &> /dev/null && pwd)/.clang-format"
 export WINTERFMT_FILE="$WINTERFMT_FILE"
 
 function winterfmt() {(
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
-		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		files=`find . -name '*.java' -exec echo {} \; | tr '\n' ' '`
 		if ! [[ $files =~ [^[:space:]] ]]; then
 			echo "No .java file found in subdirectories"
 			return 2
@@ -19,7 +19,7 @@ function winterfmt() {(
 	fi
 
 	if [[ "$@" == "check" ]]; then
-		files=`find . -name *.java -exec echo {} \; | tr '\n' ' '`
+		files=`find . -name '*.java' -exec echo {} \; | tr '\n' ' '`
 		if ! [[ $files =~ [^[:space:]] ]]; then
 			echo "No .java file found in subdirectories"
 			return 2
