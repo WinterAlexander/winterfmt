@@ -50,7 +50,7 @@ function winterfmt() {(
 	set -e
 	if [[ $cmdopts =~ "-i" ]]; then
 		# do the catch{} replacement
-		perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs' "$@"
+		perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs' $@
 	elif [[ $cmdopts =~ "-n" ]] || [[ $cmdopts =~ "--dry-run" ]]; then
 		# get lines with catch and then remove them TODO better macro
 		unwanted=$(grep -E "catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)\s*\{\}" -C 1 <<< "$output")
