@@ -47,8 +47,6 @@ function winterfmt() {(
 		return $code
 	fi
 
-	# from here any error is a grep mistake
-	set -e
 	if [[ $cmdopts =~ "-i" ]]; then
 		# do the catch{} replacement
 		sed -r 's/-([A-Za-z0-9]|-|=)+//g' <<< $@ | xargs perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs'
