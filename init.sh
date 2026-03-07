@@ -6,6 +6,7 @@ WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")" &> /dev
 export WINTERFMT_FILE="$WINTERFMT_FILE"
 
 function winterfmt() {(
+	set -o xtrace
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
 		files=`find . -name '*.java' -exec echo {} \; | tr '\n' ' '`
