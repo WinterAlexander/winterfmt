@@ -1,11 +1,9 @@
 #!/bin/bash
 
-
-# locale .clang-format (same directory as this script)
-WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")" &> /dev/null && pwd)/.clang-format"
-export WINTERFMT_FILE="$WINTERFMT_FILE"
+export WINTERFMT_FILE="/home/winter/git/winterfmt/.clang-format"
 
 function winterfmt() {(
+    set -o xtrace
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
 		files=`find . -name '*.java' -exec echo {} \; | tr '\n' ' '`
@@ -34,7 +32,8 @@ function winterfmt() {(
 
 	# call clang-format with the same arguments but pass .clang-format file. Redirect stderr to
 	# stdout in order to manipulate it later
-	cmd="${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1"
+    input="$(</dev/stdin)"
+	cmd="${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1 <<< \"$input\""
 
 	set +e
 	# call script in order to capture the output while preserving colors. -e to get the output code
@@ -71,5 +70,10 @@ function winterfmt() {(
 		# do the catch{} replacement
 		sed -r 's/-([A-Za-z0-9]|-|=)+//g' <<< $@ | xargs perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs'
 	fi
+
+	echo "$output"
 	return 0
 )}
+
+echo "ARGS $@" >> /home/winter/git/winterfmt/args.txt
+winterfmt $@
