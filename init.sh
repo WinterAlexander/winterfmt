@@ -32,17 +32,21 @@ function winterfmt() {(
 	# extract options (words starting with -)
 	cmdopts=$(grep -oE "\-([A-Za-z0-9]|-|=)+" <<< $@)
 
+	set +e
+
 	# call clang-format with the same arguments but pass .clang-format file. Redirect stderr to
 	# stdout in order to manipulate it later
-	cmd="${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1"
+	if [[ $cmdopts =~ "--fno-color-diagnostics" ]]; then
+		output=$(${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1)
+	else
+		# call script in order to capture the output while preserving colors. -e to get the output code
+		output=$(script -q -e -c "${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1" /dev/null)
+	fi
 
-	set +e
-	# call script in order to capture the output while preserving colors. -e to get the output code
-	output=$(script -q -e -c "$cmd" /dev/null)
 	code=$?
 
 	if [[ $cmdopts =~ "-n" ]] || [[ $cmdopts =~ "--dry-run" ]]; then
-		# get lines with catch and then remove them TODO better macro
+		# get lines with catch and then remove them
 		unwanted=$(grep -E "catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)\s*\{\}" -C 1 <<< "$output")
 		output=$(grep -vF "$unwanted" <<< "$output")
 
@@ -72,4 +76,10 @@ function winterfmt() {(
 		sed -r 's/-([A-Za-z0-9]|-|=)+//g' <<< $@ | xargs perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs'
 	fi
 	return 0
+)}
+
+function build_winterfmt_ide() {(
+	cat ${BASH_SOURCE[0]:-${(%):-%x}} > ide_runner.sh
+	echo "\nexport WINTERFMT_FILE=$WINTERFMT_FILE" >> ide_runner.sh
+	echo 'winterfmt $@' >> ide_runner.sh
 )}
