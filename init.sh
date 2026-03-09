@@ -1,10 +1,22 @@
 #!/bin/bash
 
-
 # locale .clang-format (same directory as this script)
-WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")" &> /dev/null && pwd)/.clang-format"
+if [ -z ${ZSH_VERSION+check} ]; then
+	WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/.clang-format"
+else
+	# avoid doing this on non zshell shells because of the ide build below
+	WINTERFMT_FILE="$(cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")" &> /dev/null && pwd)/.clang-format"
+fi
 export WINTERFMT_FILE="$WINTERFMT_FILE"
 
+#
+# Main function for formatting using the winterfmt format. Meant to be called directly from the
+# shell as a bash function. When no argument, does a replace on all Java files in subdirectories
+# and has a convenience option 'check' to do a check on all Java files in subdirectories instead.
+# Otherwise, arguments are passed to clang-format. After formatting, this formatter will do
+# transformations on all input files. After checking, this formatter will modify the check output
+# and possibly return code to ensure the desired format returns no errors.
+#
 function winterfmt() {(
 	# no args -> format whole project (zshell only)
 	if [ "$#" -eq 0 ]; then
@@ -40,7 +52,8 @@ function winterfmt() {(
 		output=$(${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1)
 	else
 		# call script in order to capture the output while preserving colors. -e to get the output code
-		output=$(script -q -e -c "${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1" /dev/null)
+		cmd="${WINTERFMT_CLANG_FORMAT:-clang-format} --style=file:$WINTERFMT_FILE $@ 2>&1"
+		output=$(script -q -e -c "$cmd" /dev/null)
 	fi
 
 	code=$?
@@ -75,11 +88,20 @@ function winterfmt() {(
 		# do the catch{} replacement
 		sed -r 's/-([A-Za-z0-9]|-|=)+//g' <<< $@ | xargs perl -g -i -pe 's/(catch\s*\(([A-Za-z0-9]|\|\.|\s)+ignored\)(\s*\n*)*)\{\s+\}/\1\{\}/igs'
 	fi
+
+	if [[ -n "$output" ]]; then
+		echo "$output"
+	fi
 	return 0
 )}
 
+#
+# Builds an executable for use by an IDE. This is needed for the IntelliJ clang-format plugin which
+# expects to launch an executable and not a bash function.
+#
 function build_winterfmt_ide() {(
 	cat ${BASH_SOURCE[0]:-${(%):-%x}} > ide_runner.sh
 	echo "\nexport WINTERFMT_FILE=$WINTERFMT_FILE" >> ide_runner.sh
 	echo 'winterfmt $@' >> ide_runner.sh
+	shc -f ide_runner.sh
 )}
